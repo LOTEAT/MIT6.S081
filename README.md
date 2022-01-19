@@ -86,7 +86,7 @@ int main(int argc, char *argv[])
 
 ## 4. primes
 
-![image-20220119142610938](.\README.assets\image-20220119142610938.png)
+![image-20220119142610938](./README.assets/image-20220119142610938.png)
 
 The core idea of this lab is shown in the figure above, which is actually the implementation of the Ehrlich sieve method through pipe. The core idea is that a process receives data from its left process, filters it, and then passes it to the next process, so you can consider using recursion to implement the program. Note that arrays start at 2. In addition, the integer type is four bytes, and the value returned when calling the write and read system calls should be 4.
 
@@ -275,4 +275,4 @@ int main(int argc, char *argv[])
 
 ## 7. result
 
-![image-20220119143412342](.\README.assets\image-20220119143412342.png)
+![image-20220119143412342](./README.assets/image-20220119143412342.png)

@@ -6,6 +6,8 @@ Type `make qemu` on the command line to boot xv6.
 
 ![image-20220119142114669](.\README.assets\image-20220119142114669.png)
 
+![MIT6.S081/image-20220119142114669.png at lab1 · LOTEAT/MIT6.S081 (github.com)](https://github.com/LOTEAT/MIT6.S081/blob/lab1/README.assets/image-20220119142114669.png)
+
 ## 2. sleep
 
 In this lab, the use of the sleep system call is mainly investigated. According to `int sleep(int n)`, it is easy to know that you only need to pass the parameters entered on the command line into the sleep function. However, since the parameters passed in the command line are all string types, the strings need to be converted into integers. There are some auxiliary functions in xv6, of which the `atoi` function can assist in the realization of sleep.

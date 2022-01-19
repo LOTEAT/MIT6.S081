@@ -4,9 +4,7 @@
 
 Type `make qemu` on the command line to boot xv6.
 
-![image-20220119142114669](.\README.assets\image-20220119142114669.png)
-
-![MIT6.S081/image-20220119142114669.png at lab1 · LOTEAT/MIT6.S081 (github.com)](https://github.com/LOTEAT/MIT6.S081/blob/lab1/README.assets/image-20220119142114669.png)
+![image-20220119142114669](./README.assets/image-20220119142114669.png)
 
 ## 2. sleep
 

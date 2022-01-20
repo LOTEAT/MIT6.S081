@@ -1,4 +1,4 @@
-# Lab: Xv6 and Unix utilitie
+# Lab: Xv6 and Unix utilities
 
 ## 1. Boot xv6
 

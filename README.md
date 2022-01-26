@@ -218,5 +218,7 @@ userinit:
 u2kvmcopy(p->pagetable, p->kpagetable, 0, p->sz);
 ```
 
-## 4. result
+## 4. Result
+
+![image-20220126205032751](./README.assets/image-20220126205032751.png)
 

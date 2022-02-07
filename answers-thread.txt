@@ -1,0 +1,5 @@
+Q: Why are there missing keys with 2 threads, but not with 1 thread?
+A: 666 
+
+Q: Identify a sequence of events with 2 threads that can lead to a key being missing. 
+A: 666

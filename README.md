@@ -2,7 +2,7 @@
 
 This repository is my implementation of the MIT6.S081 labs(2020). In the README of each branch of the repository, including the explanation of each lab.
 
-[lab1-util](https://github.com/LOTEAT/MIT6.S081/tree/lab1-utility) 
+[lab1-util](https://github.com/LOTEAT/MIT6.S081/tree/lab1-util) 
 
 [lab2-syscall](https://github.com/LOTEAT/MIT6.S081/tree/lab2-syscall)
 

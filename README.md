@@ -2,86 +2,88 @@
 
 ## 1. Boot xv6
 
-Type `make qemu` on the command line to boot xv6.
+​	Type `make qemu` on the command line to boot xv6.
 
 ![image-20220119142114669](./README.assets/image-20220119142114669.png)
 
 ## 2. sleep
 
-In this lab, the use of the sleep system call is mainly investigated. According to `int sleep(int n)`, it is easy to know that you only need to pass the parameters entered on the command line into the sleep function. However, since the parameters passed in the command line are all string types, the strings need to be converted into integers. There are some auxiliary functions in xv6, of which the `atoi` function can assist in the realization of sleep.
+​	In this lab, the use of the sleep system call is mainly investigated. According to `int sleep(int n)`, it is easy to know that you only need to pass the parameters entered on the command line into the sleep function. However, since the parameters passed in the command line are all string types, the strings need to be converted into integers. There are some auxiliary functions in xv6, of which the `atoi` function can assist in the realization of sleep.
 
 ```c
 #include "kernel/types.h"
 #include "kernel/stat.h"
 #include "user/user.h"
-int main(int argc, char *argv[])
+
+int
+main(int argc, char *argv[])
 {
-    if(argc <= 1){
-        fprintf(2, "usage: sleep time\n");
-        exit(1);
-    }
-    int time = atoi(argv[1]);
-    printf("(nothing happens for a little while)\n");
-    sleep(time);
-    exit(0);
+  if(argc < 2){
+    fprintf(2, "Usage: sleep time...\n");
+    exit(1);
+  }
+  int sleep_time = atoi(argv[1]);
+  sleep(sleep_time);
+  exit(0);
 }
 ```
 
 ## 3. pingpong
 
-In this lab, it is required to write a program that uses a system call to transfer a byte between two processes using a pair of pipes.
-	The pipe in xv6 is one-way communication, so two pipes are required. One is written by the parent process and read by the child process; the other is written by the child process and read by the parent process. After creating two pipes, fork a child process. In the child process, try to read the value passed in from the parent process from the pipe. If it is abnormal, stop the program. Otherwise, print out the pid and "received ping", and pass the value to the parent process through the pipe. If the abnormality also terminates the program.
-	The parent process is the same as the child process, but wait(0) is added to ensure that the child process can be fully executed.
+​	In this lab, it is required to write a program that uses a system call to transfer a byte between two processes using a pair of pipes.
+
+​	The pipe in xv6 is one-way communication, so two pipes are required. One is written by the parent process and read by the child process; the other is written by the child process and read by the parent process. After creating two pipes, fork a child process. In the child process, try to read the value passed in from the parent process from the pipe. If it is abnormal, stop the program. Otherwise, print out the pid and "received ping", and pass the value to the parent process through the pipe. If the abnormality also terminates the program.
+
+​	The parent process is the same as the child process, but wait(0) is added to ensure that the child process can be fully executed.
+
+​	However, you should know a feature about ***pipe***: **If a process tries to read before something is written to the pipe, the process is suspended until something is written.** [some knowledge about pipe](https://www.geeksforgeeks.org/pipe-system-call/)
+
+​	For now, you should understand why `printf("%d: received ping\n", getpid());` is in that position.
 
 ```c
 #include "kernel/types.h"
 #include "kernel/stat.h"
 #include "user/user.h"
-int main(int argc, char *argv[])
+
+int
+main(int argc, char *argv[])
 {
-    // a pair of pipes
-    // parent process writes and child process reads
-    int p_parent[2];
-    // child process writes and parent process reads
-    int p_child[2];
-    // the byte to write or read
-    char buf[] = {"Y"};
-    pipe(p_parent);
-    pipe(p_child);
-    if (fork() == 0)
-    {
-        close(p_parent[1]);
-        close(p_child[0]);
-        // check whether the length of characters is equal?
-        if (read(p_parent[0], buf, 1) != 1)
-        {
-            printf("fail to read in child process\n");
-            exit(1);
-        }
-        if (write(p_child[1], buf, 1) != 1)
-        {
-            printf("fail to write in child process\n");
-            exit(1);
-        }
-        printf("%d: received ping\n", getpid());
-        exit(0);
+  int parent_pipe[2];
+  int child_pipe[2];
+  pipe(parent_pipe);
+  pipe(child_pipe);
+  char message[] = {"6"};
+  
+  // child process
+  if(fork() == 0){
+    close(parent_pipe[1]);
+    close(child_pipe[0]);
+    if(read(parent_pipe[0], message, 1) != 1){
+      fprintf(2, "read error\n");
+      exit(1);
     }
-    close(p_parent[0]);
-    close(p_child[1]);
-    if (write(p_parent[1], buf, 1) != 1)
-    {
-        printf("fail to write in parent process\n");
-        exit(1);
+    printf("%d: received ping\n", getpid());
+    if(write(child_pipe[1], message, 1) != 1){ 
+      fprintf(2, "write error\n");
+      exit(1);
     }
-    if (read(p_child[0], buf, 1) != 1)
-    {
-        printf("fail to read in parent process\n");
-        exit(1);
-    }
-    printf("%d: received pong\n", getpid());
-    wait(0);
     exit(0);
+  } 
+  close(parent_pipe[0]);
+  close(child_pipe[1]);
+  if(write(parent_pipe[1], message, 1) != 1){
+    fprintf(2, "write error\n");
+    exit(1);
+  }
+  if(read(child_pipe[0], message, 1) != 1){
+    fprintf(2, "read error\n");
+    exit(1);
+  }
+  printf("%d: received pong\n", getpid());
+  wait(0);
+  exit(0);
 }
+
 ```
 
 ## 4. primes

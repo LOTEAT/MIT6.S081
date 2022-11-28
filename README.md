@@ -143,82 +143,97 @@ This lab mainly imitates the code in `user/ls.c`. For file search, depth-first s
 #include "user/user.h"
 #include "kernel/fs.h"
 
-char* fmtname(char *path)
+char*
+fmtname(char *path)
 {
-    static char buf[DIRSIZ + 1];
-    char *p;
+  static char buf[DIRSIZ+1];
+  char *p;
+  // Find first character after last slash.
+  for(p=path+strlen(path); p >= path && *p != '/'; p--)
+    ;
+  p++;
 
-    // Find first character after last slash.
-    for (p = path + strlen(path); p >= path && *p != '/'; p--)
-        ;
-    p++;
+  // Return blank-padded name.
+  if(strlen(p) >= DIRSIZ)
+    return p;
+  memmove(buf, p, strlen(p)+1);
 
-    // Return blank-padded name.
-    if (strlen(p) >= DIRSIZ)
-        return p;
-    memmove(buf, p, strlen(p) + 1);
-    return buf;
+  // memset(buf+strlen(p), ' ', DIRSIZ-strlen(p));
+  return buf;
 }
 
-void find(char *path, char *target_file)
+void
+find(char *path, char *tgt_file)
 {
-    char buf[512], *p;
-    int fd;
-    struct dirent de;
-    struct stat st;
+  char buf[512], *p;
+  int fd;
+  struct dirent de;
+  struct stat st;
 
-    if ((fd = open(path, 0)) < 0)
-    {
-        fprintf(2, "find: cannot open %s\n", path);
-        return;
-    }
-    if (fstat(fd, &st) < 0)
-    {
-        fprintf(2, "find: cannot stat %s\n", path);
-        close(fd);
-        return;
-    }
 
-    switch (st.type)
-    {
-    case T_FILE:
-        if (strcmp(fmtname(path), target_file) == 0)
-        {
-            printf("%s\n", path);
-        }
-        break;
-    case T_DIR:
-        if (strlen(path) + 1 + DIRSIZ + 1 > sizeof buf)
-        {
-            printf("find: path too long\n");
-            break;
-        }
-        strcpy(buf, path);
-        p = buf + strlen(buf);
-        *p++ = '/';
-        while (read(fd, &de, sizeof(de)) == sizeof(de))
-        {
-            if (de.inum == 0 || strcmp(de.name, ".") == 0 || strcmp(de.name, "..") == 0)
-                continue;
-            memmove(p, de.name, strlen(de.name));
-            p[strlen(de.name)] = 0;
-            find(buf, target_file);
-        }
-        break;
-    }
+  if((fd = open(path, 0)) < 0){
+    fprintf(2, "ls: cannot open %s\n", path);
+    return;
+  }
+
+  if(fstat(fd, &st) < 0){
+    fprintf(2, "ls: cannot stat %s\n", path);
     close(fd);
+    return;
+  }
+
+  switch(st.type){
+  case T_FILE:
+		// printf("%s:%d\n", fmtname(path), strlen(fmtname(path)));
+		// printf("%d %s %s\n", strcmp(fmtname(path), tgt_file), fmtname(path), tgt_file);
+		if(!strcmp(fmtname(path), tgt_file)){
+			printf("%s\n", path);
+		}
+    break;
+
+  case T_DIR:
+    if(strlen(path) + 1 + DIRSIZ + 1 > sizeof buf){
+      printf("ls: path too long\n");
+      break;
+    }
+    strcpy(buf, path);
+    p = buf+strlen(buf);
+    *p++ = '/';
+    while(read(fd, &de, sizeof(de)) == sizeof(de)){
+			if(!strcmp(de.name, ".") || !strcmp(de.name, ".."))
+				continue;
+      if(de.inum == 0)
+        continue;
+
+      memmove(p, de.name, strlen(de.name));
+      p[strlen(de.name)] = 0;
+      if(stat(buf, &st) < 0){
+        printf("ls: cannot stat %s\n", buf);
+        continue;
+      }
+			
+			find(buf, tgt_file);
+      // printf("%s %d %d %d\n", fmtname(buf), st.type, st.ino, st.size);
+    }
+    break;
+  }
+  close(fd);
 }
 
-int main(int argc, char *argv[])
+int
+main(int argc, char *argv[])
 {
-    if (argc < 3)
-    {
-        fprintf(2, "find: find <dir> <file name>\n");
-        exit(1);
-    }
-    find(argv[1], argv[2]);
-    exit(0);
+
+  // if(argc < 2){
+  //   find(".");
+  //   exit(0);
+  // }
+  // for(i=1; i<argc; i++)
+  //   find(argv[i]);
+	find(argv[1], argv[2]);
+  exit(0);
 }
+
 ```
 
 ## 6. xargs
@@ -232,44 +247,41 @@ The purpose of this lab is to take each line output by the previous command as a
 int main(int argc, char *argv[])
 {
 	char* args[MAXARG];
-	int i = 1, j = 0;
-	for(; i < argc; i++)
-		args[j++] = argv[i];
+  int args_length = 0;
+	for(int i=1; i < argc; i++)
+		args[args_length++] = argv[i];
 	char block[32];
 	char buffer[32];
-	char* p = buffer;
-	// read the output
+  char* p = buffer;
+  int offset = 0;
+
 	int len;
-	while((len = read(0, block, sizeof block)) > 0)
+	while((len = read(0, block, sizeof(block))) > 0)
 	{
-		int k = 0, l = 0;
-		for(; k < len; k++)
-		{
-			if(block[k] == '\n')
-			{
-				buffer[l] = 0;
-                l = 0;
-                args[j++] = p;
-                p = buffer;
-                args[j] = 0;
-                j = argc - 1;
-                if(fork() == 0){
-                    exec(argv[1], args);
-                }                
-                wait(0);	
-			}
-			else if(block[l] == ' ')
-			{
-			    buffer[l++] = 0;
-                args[j++] = p;
-                p = &buffer[l];
-            }
-            else 
-            {
-                buffer[l++] = block[k];
-            }	
-			
-		}
+    for(int i=0; i<len; i++){
+      // '\n' appears
+      if(block[i] == '\n'){
+        buffer[offset] = 0;
+        offset = 0;
+        args[args_length++] = p;
+        p = buffer;
+        args[args_length] = 0;
+        args_length = argc - 1;
+        if(fork() == 0){
+          exec(argv[1], args);
+          exit(0);
+        }
+        wait(0);
+      }
+      else if(block[i] == ' '){
+        buffer[offset++] = 0;
+        args[args_length] = p;
+        p = buffer + offset;
+      }
+      else{
+        buffer[offset++] = block[i];
+      }
+    }
 	}
 	exit(0);
 }
